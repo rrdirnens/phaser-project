@@ -20,16 +20,17 @@ var config = {
 
 let game = new Phaser.Game(config);
 let player;
-let speed = 300;
+let speed = 600;
 let cursors;
 
 
 function preload() {
     this.load.image('tiles', 'assets/btp-map.png')
+    this.load.tilemapTiledJSON('map', 'assets/firstlevel.JSON')
     this.load.spritesheet('dude',
-        'assets/dude.png', {
-            frameWidth: 32,
-            frameHeight: 48
+        'assets/player.png', {
+            frameWidth: 8,
+            frameHeight: 8
         }
     );
 }
@@ -37,85 +38,50 @@ function preload() {
 
 
 function create() {
-    const level = [
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        
-    ];
 
     const map = this.make.tilemap({
-        data: level,
-        tileWidth: 16,
-        tileHeight: 16
+        key: 'map'
     });
-    const tiles = map.addTilesetImage("tiles");
-    const layer = map.createStaticLayer(0, tiles, 0, 0);
 
-    player = this.physics.add.sprite(100, 100, 'dude');
+    const tileset = map.addTilesetImage('BTP', 'tiles');
+
+    const death = map.createLayer("death", tileset, 0, 0)
+    const life = map.createLayer("life", tileset, 0, 0)
+
+    player = this.physics.add.sprite(0, 130, 'dude');
     player.setCollideWorldBounds(true);
-    player.body.setVelocity(0);
+    player.body.setVelocityX(speed);
     player.body.allowGravity = false;
 
-    this.anims.create({
-        key: 'left',
-        frames: this.anims.generateFrameNumbers('dude', {
-            start: 0,
-            end: 3
-        }),
-        frameRate: 10,
-        repeat: -1
+    
+
+    death.setCollisionByProperty({
+        collides: true
     });
 
-    this.anims.create({
-        key: 'turn',
-        frames: [{
-            key: 'dude',
-            frame: 4
-        }],
-        frameRate: 20
-    });
-
-    this.anims.create({
-        key: 'right',
-        frames: this.anims.generateFrameNumbers('dude', {
-            start: 5,
-            end: 8
-        }),
-        frameRate: 10,
-        repeat: -1
-    });
-
-
-    // this.physics.add.collider(player, platforms);
+    // this.physics.add.collider(player, death);
 
     cursors = this.input.keyboard.createCursorKeys();
+
+    this.physics.add.collider(player, death, playerDies, null, this)
 
 }
 
 function update() {
     if (cursors.left.isDown) {
         player.setVelocity(-speed, 0);
-        player.anims.play('left', true);
     } else if (cursors.right.isDown) {
         player.setVelocity(speed, 0);
-        player.anims.play('right', true);
     } else if (cursors.down.isDown) {
         player.setVelocity(0, speed);
     } else if (cursors.up.isDown) {
         player.setVelocity(0, -speed)
     } else {
-
-        player.anims.play('turn');
+        
     }
 
-    // if (cursors.up.isDown && player.body.touching.down) {
-    //     player.setVelocityY(-600);
-    // }
+}
+
+function playerDies() {
+    this.scene.restart();
 }
